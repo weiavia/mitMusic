@@ -1,0 +1,173 @@
+<template>
+    <div class="recommend">
+        <el-tabs type="border-card" @tab-click="sTab">
+            <el-tab-pane label="我推荐的" >
+                <div class="song-item" v-for="item in listSongs">
+                    <img :src="item.avatar" alt="" v-if="item.avatar">
+                    <img src="./default.png" alt="" v-else>
+                    <p>{{item.name}}</p>
+                </div>
+
+
+            </el-tab-pane>
+            <el-tab-pane label="推荐歌曲">
+                <div class="searchBox">
+                    <el-input v-model="query" placeholder="搜索歌曲" class="txt"></el-input>
+                    <el-button type="info" class="button" @click="search">搜索</el-button>
+                </div>
+            </el-tab-pane>
+        </el-tabs>
+        <scroll class="listWrapper" v-show="songs.length">
+            <el-card class="box-card">
+                <div class="text item " v-for="item in songs" @click="addItem(item)">
+                    <span class="name">{{item.name}}</span>
+                    <span class="singer">{{item.singer}}</span>
+                    <i class="el-icon-plus"></i>
+                </div>
+            </el-card>
+        </scroll>
+        <addMenu :show="addMenuShow" @close="closeMenu" :list="listSongs"></addMenu>
+    </div>
+</template>
+
+<script>
+  import Scroll from 'base/scroll/scroll'
+  import AddMenu from 'components/addMenu/addMenu'
+  import {search} from 'api/search'
+  import {ERR_OK} from 'api/config'
+  import {getSongList} from 'api/songlist'
+  import {createSong} from '../../common/js/song'
+
+  export default {
+    name: 'RECOMMEND',
+    data() {
+      return {
+        query: '',
+        currentPage: 0,
+        num: 30,
+        songs: [],
+        addMenuShow: false,
+        listSongs: []
+      }
+    },
+    created() {
+      this._getSongList();
+    },
+    methods: {
+      search() {
+        search(this.query, this.currentPage, false, this.num).then((res) => {
+          if (res.code === ERR_OK) {
+            this.normalizeSearch(res.data)
+            console.log(this.songs)
+          }
+        })
+      },
+      sTab() {
+        this.songs = []
+      },
+      addItem(song) {
+        this.addMenuShow = true
+      },
+      closeMenu() {
+        this.addMenuShow = false
+      },
+      normalizeSearch(data) {
+        let resSongs = []
+        let songs = data.song.list
+        songs.forEach((e) => {
+          resSongs.push(createSong(e))
+        })
+        this.songs = resSongs
+      },
+
+      _getSongList() {
+        getSongList().then((res) => {
+          if(res.data.errorCode === 0) {
+            this.listSongs = res.data.data;
+          }
+        })
+      },
+      getAvatar() {
+
+      }
+    },
+    components: {
+      Scroll,
+      AddMenu
+    }
+  }
+</script>
+
+<style>
+
+    .recommend {
+        height: 100%;
+    }
+    .searchBox {
+        display: flex
+    }
+    .searchBox .txt {
+        margin-right: 10px;
+    }
+    .listWrapper {
+        margin-top: 10px;
+        height: calc(100% - 100px);
+        overflow: hidden;
+    }
+    .box-card {
+        width: calc(100% - 3px);
+        margin-top: 10px;
+    }
+    .box-card .item {
+
+        height: 40px;
+        text-indent: 1em;
+        cursor: pointer;
+        line-height: 40px;
+        font-size: 14px;
+    }
+    .box-card .item:hover {
+        background: #eee;
+
+    }
+    .box-card .item .name {
+        display: inline-block;
+        width: 20%;
+        overflow: hidden;
+        text-overflow:ellipsis;
+        white-space: nowrap;
+    }
+    .box-card .item .singer {
+        vertical-align: top;
+        display: inline-block;
+        width: 30%;
+        margin-right: 10px;
+        overflow: hidden;
+        text-overflow:ellipsis;
+        white-space: nowrap;
+    }
+    .el-icon-plus {
+        display: inline-block;
+        vertical-align: top;
+        line-height: 40px;
+    }
+
+    .song-item {
+        width: 100px;
+        height: 130px;
+
+        float: left;
+        margin: 0 10px 10px 0;
+    }
+
+    .song-item img {
+        width: 100px;
+        height: 100px;
+    }
+
+    .song-item p {
+        text-align: center;
+        font-size: 14px;
+    }
+
+</style>
